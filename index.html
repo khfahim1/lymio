@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lymio — Your AI Companion, Always Floating</title>
+  <meta name="description" content="Lymio is a persistent 250×250 AI companion overlay for Android. Powered by Claude, DeepSeek & more. Download the APK now." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:       #0B0F19;
+      --bg-card:       rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.08);
+      --gold:          #F5C842;
+      --gold-dim:      #c9a227;
+      --gold-glow:     rgba(245,200,66,0.35);
+      --cyan:          #00E5FF;
+      --cyan-glow:     rgba(0,229,255,0.25);
+      --purple:        #9B59FF;
+      --purple-glow:   rgba(155,89,255,0.25);
+      --text-primary:  #F0F4FF;
+      --text-secondary:#8A95B0;
+      --border:        rgba(245,200,66,0.18);
+      --radius:        16px;
+      --radius-lg:     24px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0B0F19; }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+    /* ── STAR CANVAS ── */
+    #starfield {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 6%;
+      backdrop-filter: blur(18px) saturate(1.6);
+      -webkit-backdrop-filter: blur(18px) saturate(1.6);
+      background: rgba(11,15,25,0.72);
+      border-bottom: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .nav-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 0.08em;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;
+      font-weight: 500; transition: color 0.25s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--gold) 0%, #e0a800 100%);
+      color: #0B0F19; font-weight: 700; font-size: 0.85rem;
+      padding: 10px 22px; border-radius: 50px; text-decoration: none;
+      border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.04em;
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--gold-glow); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .hamburger span { width: 24px; height: 2px; background: var(--gold); border-radius: 2px; transition: all 0.3s; }
+    .mobile-menu {
+      display: none; position: fixed; top: 72px; left: 0; right: 0; z-index: 99;
+      background: rgba(11,15,25,0.97); backdrop-filter: blur(20px);
+      padding: 2rem; flex-direction: column; gap: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { color: var(--text-primary); text-decoration: none; font-size: 1.1rem; font-weight: 500; }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 120px 6% 80px;
+      overflow: hidden;
+    }
+    .hero-bg-glow {
+      position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none;
+    }
+    .hero-bg-glow.gold  { width: 600px; height: 600px; background: radial-gradient(circle, rgba(245,200,66,0.12) 0%, transparent 70%); top: 10%; left: -10%; }
+    .hero-bg-glow.cyan  { width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,229,255,0.1) 0%, transparent 70%); bottom: 5%; right: -5%; }
+    .hero-bg-glow.purple{ width: 400px; height: 400px; background: radial-gradient(circle, rgba(155,89,255,0.1) 0%, transparent 70%); top: 40%; right: 20%; }
+
+    .hero-content {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4rem; align-items: center; max-width: 1200px; width: 100%;
+    }
+    .hero-text { z-index: 2; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.3);
+      color: var(--gold); font-size: 0.78rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 50px; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+      animation: pulseGold 3s ease-in-out infinite;
+    }
+    @keyframes pulseGold {
+      0%,100% { box-shadow: 0 0 0 0 rgba(245,200,66,0.0); }
+      50%      { box-shadow: 0 0 0 8px rgba(245,200,66,0.0), 0 0 20px rgba(245,200,66,0.2); }
+    }
+    .hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 900; line-height: 1.1;
+      margin-bottom: 1.2rem; letter-spacing: -0.01em;
+    }
+    .hero-title .line-gold {
+      background: linear-gradient(135deg, var(--gold) 0%, #fff7d6 60%, var(--gold) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 18px rgba(245,200,66,0.5));
+    }
+    .hero-title .line-cyan {
+      background: linear-gradient(135deg, var(--cyan) 0%, #a8f4ff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-subtitle {
+      color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7;
+      max-width: 500px; margin-bottom: 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    .btn-download {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: linear-gradient(135deg, var(--gold) 0%, #e0a800 100%);
+      color: #0B0F19; font-weight: 800; font-size: 1rem;
+      padding: 16px 32px; border-radius: 50px; text-decoration: none;
+      border: none; cursor: pointer;
+      box-shadow: 0 0 30px rgba(245,200,66,0.4), 0 8px 32px rgba(245,200,66,0.2);
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s;
+      animation: pulseDownload 2.5s ease-in-out infinite;
+      position: relative; overflow: hidden;
+    }
+    .btn-download::before {
+      content: ''; position: absolute; top: -50%; left: -60%;
+      width: 60%; height: 200%; background: rgba(255,255,255,0.3);
+      transform: skewX(-20deg); transition: left 0.5s;
+    }
+    .btn-download:hover::before { left: 140%; }
+    .btn-download:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 0 50px rgba(245,200,66,0.6), 0 12px 40px rgba(245,200,66,0.3); }
+    @keyframes pulseDownload {
+      0%,100% { box-shadow: 0 0 30px rgba(245,200,66,0.4), 0 8px 32px rgba(245,200,66,0.2); }
+      50%      { box-shadow: 0 0 50px rgba(245,200,66,0.6), 0 8px 40px rgba(245,200,66,0.35); }
+    }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent; color: var(--text-primary); font-weight: 600; font-size: 0.95rem;
+      padding: 15px 28px; border-radius: 50px; text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.25s; cursor: pointer;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); background: rgba(245,200,66,0.05); }
+
+    /* ── 3D CARD MOCKUP ── */
+    .hero-visual {
+      perspective: 1000px; display: flex; align-items: center; justify-content: center;
+      position: relative; z-index: 2;
+    }
+    .card-3d-wrapper {
+      position: relative; width: 340px; height: 440px;
+      transform-style: preserve-3d;
+      transition: transform 0.1s linear;
+    }
+    .phone-mockup {
+      position: absolute; inset: 0;
+      background: linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%);
+      border: 1px solid rgba(245,200,66,0.25);
+      border-radius: 36px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow:
+        0 0 0 1px rgba(245,200,66,0.1),
+        0 30px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      overflow: hidden;
+      transform: translateZ(0px);
+    }
+    .phone-mockup::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 100px; height: 28px;
+      background: rgba(0,0,0,0.8); border-radius: 0 0 16px 16px; z-index: 10;
+    }
+    .phone-screen {
+      position: absolute; inset: 8px; border-radius: 30px;
+      background: linear-gradient(160deg, #0d1326 0%, #0B0F19 50%, #0d0f1f 100%);
+      overflow: hidden; padding: 50px 20px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .bubble-orb {
+      width: 100px; height: 100px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(245,200,66,0.9), rgba(245,200,66,0.3) 50%, rgba(0,229,255,0.2) 100%);
+      box-shadow: 0 0 40px rgba(245,200,66,0.5), 0 0 80px rgba(245,200,66,0.2);
+      animation: floatBubble 4s ease-in-out infinite;
+      position: relative;
+    }
+    .bubble-orb::after {
+      content: 'L'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 900; color: #0B0F19;
+      display: flex; align-items: center; justify-content: center;
+    }
+    @keyframes floatBubble {
+      0%,100% { transform: translateY(0) scale(1); }
+      50%      { transform: translateY(-12px) scale(1.03); }
+    }
+    .screen-text-block {
+      width: 100%; background: rgba(255,255,255,0.05); border-radius: 12px;
+      padding: 12px 14px; border: 1px solid rgba(245,200,66,0.1);
+    }
+    .screen-text-block .label { font-size: 0.6rem; color: var(--gold); font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
+    .screen-text-block .value { font-size: 0.78rem; color: var(--text-primary); font-weight: 500; }
+    .screen-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      padding: 4px 10px; border-radius: 50px; font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .chip.claude  { background: rgba(155,89,255,0.2); color: #b97fff; border: 1px solid rgba(155,89,255,0.3); }
+    .chip.deepseek{ background: rgba(0,229,255,0.15); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
+    .chip.gpt     { background: rgba(80,200,120,0.15); color: #5fd68a; border: 1px solid rgba(80,200,120,0.3); }
+
+    /* Floating card layers */
+    .floating-card {
+      position: absolute; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(245,200,66,0.2);
+      border-radius: 14px; padding: 10px 14px; font-size: 0.72rem; font-weight: 600;
+      display: flex; align-items: center; gap: 8px; white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .floating-card.card-l { bottom: -20px; left: -60px; animation: fcFloat1 5s ease-in-out infinite; }
+    .floating-card.card-r { top: 30px; right: -70px; animation: fcFloat2 6s ease-in-out infinite; }
+    .floating-card .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-green  { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+    .dot-yellow { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+    @keyframes fcFloat1 { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)} }
+    @keyframes fcFloat2 { 0%,100%{transform:translateY(0) rotate(1deg)} 50%{transform:translateY(-14px) rotate(-1deg)} }
+
+    /* Gold border glow on phone */
+    .phone-glow-ring {
+      position: absolute; inset: -12px; border-radius: 48px;
+      border: 1px solid rgba(245,200,66,0.08);
+      animation: ringPulse 3s ease-in-out infinite;
+    }
+    @keyframes ringPulse {
+      0%,100%{ box-shadow: 0 0 0 0 rgba(245,200,66,0.0); opacity:0.5; }
+      50%    { box-shadow: 0 0 40px 10px rgba(245,200,66,0.1); opacity:1; }
+    }
+
+    /* ── SECTION COMMON ── */
+    section { position: relative; z-index: 1; }
+    .section-inner { max-width: 1200px; margin: 0 auto; padding: 100px 6%; }
+    .section-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--gold); font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .section-tag::before, .section-tag::after {
+      content: ''; display: inline-block; width: 24px; height: 1px; background: var(--gold);
+    }
+    .section-title {
+      font-family: 'Orbitron', sans-serif; font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 800; line-height: 1.2; margin-bottom: 1rem;
+    }
+    .section-sub { color: var(--text-secondary); font-size: 1rem; max-width: 560px; line-height: 1.7; }
+
+    /* ── FEATURES ── */
+    #features { background: linear-gradient(180deg, transparent 0%, rgba(245,200,66,0.02) 50%, transparent 100%); }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem; margin-top: 3.5rem;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s, border-color 0.3s, background 0.3s;
+      cursor: default;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-color, var(--gold)), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-8px) scale(1.02); border-color: rgba(245,200,66,0.4); background: var(--bg-card-hover); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-card:hover .feature-icon { box-shadow: 0 0 30px var(--accent-glow, var(--gold-glow)); }
+    .feature-icon {
+      width: 54px; height: 54px; border-radius: 14px; margin-bottom: 1.2rem;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+      transition: box-shadow 0.3s;
+    }
+    .feature-icon.gold   { background: rgba(245,200,66,0.1); color: var(--gold); }
+    .feature-icon.cyan   { background: rgba(0,229,255,0.1);  color: var(--cyan); }
+    .feature-icon.purple { background: rgba(155,89,255,0.1); color: var(--purple); }
+    .feature-card h3 { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; line-height: 1.3; }
+    .feature-card p  { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65; }
+    .feature-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem; }
+    .ftag {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 50px;
+    }
+    .ftag.gold   { background: rgba(245,200,66,0.1); color: var(--gold);   border: 1px solid rgba(245,200,66,0.25); }
+    .ftag.cyan   { background: rgba(0,229,255,0.1);  color: var(--cyan);   border: 1px solid rgba(0,229,255,0.25); }
+    .ftag.purple { background: rgba(155,89,255,0.1); color: var(--purple); border: 1px solid rgba(155,89,255,0.25); }
+
+    /* ── DIVIDER ── */
+    .neon-divider {
+      width: 100%; height: 1px; position: relative; margin: 0 auto;
+      background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--cyan) 70%, transparent 100%);
+      opacity: 0.25;
+    }
+
+    /* ── PRICING ── */
+    #pricing { background: linear-gradient(180deg, transparent 0%, rgba(0,229,255,0.015) 50%, transparent 100%); }
+    .pricing-toggle-wrapper {
+      display: flex; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;
+    }
+    .toggle-label { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); transition: color 0.25s; }
+    .toggle-label.active { color: var(--text-primary); }
+    .toggle-switch {
+      position: relative; width: 56px; height: 28px; cursor: pointer;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(245,200,66,0.3); border-radius: 50px;
+      transition: background 0.3s;
+    }
+    .toggle-switch input:checked ~ .toggle-track { background: rgba(245,200,66,0.2); }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+      background: var(--gold); border-radius: 50%;
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+      box-shadow: 0 0 10px rgba(245,200,66,0.6);
+    }
+    .toggle-switch input:checked ~ .toggle-track ~ .toggle-thumb { transform: translateX(28px); }
+    .savings-badge {
+      background: rgba(245,200,66,0.15); border: 1px solid rgba(245,200,66,0.35);
+      color: var(--gold); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+      padding: 4px 10px; border-radius: 50px; text-transform: uppercase;
+      animation: pulseGold 3s infinite;
+    }
+
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 1.5rem; margin-top: 3rem; align-items: start;
+    }
+    .pricing-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 2rem;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      position: relative; overflow: hidden;
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s;
+    }
+    .pricing-card.featured {
+      border-color: rgba(245,200,66,0.5);
+      background: rgba(245,200,66,0.04);
+      box-shadow: 0 0 0 1px rgba(245,200,66,0.15), 0 20px 60px rgba(245,200,66,0.1);
+      transform: scale(1.04);
+    }
+    .pricing-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .pricing-card.featured:hover { transform: scale(1.04) translateY(-6px); }
+    .pc-badge {
+      position: absolute; top: 0; right: 0;
+      background: linear-gradient(135deg, var(--gold), #e0a800);
+      color: #0B0F19; font-size: 0.65rem; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 0 var(--radius-lg) 0 14px;
+    }
+    .pc-tier { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .pc-tier.gold   { color: var(--gold); }
+    .pc-tier.cyan   { color: var(--cyan); }
+    .pc-tier.purple { color: var(--purple); }
+    .pc-price { display: flex; align-items: baseline; gap: 4px; margin: 1rem 0 0.3rem; }
+    .pc-amount { font-family: 'Orbitron', sans-serif; font-size: 2.8rem; font-weight: 900; line-height: 1; }
+    .pc-currency { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; color: var(--text-secondary); }
+    .pc-period { font-size: 0.8rem; color: var(--text-secondary); margin-left: 2px; }
+    .pc-bdt { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 1.2rem; }
+    .pc-bdt span { color: var(--text-primary); font-weight: 600; }
+    .pc-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 1.2rem 0; }
+    .pc-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.8rem; }
+    .pc-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.88rem; color: var(--text-secondary); }
+    .pc-features li .chk { color: var(--gold); flex-shrink: 0; margin-top: 2px; }
+    .pc-features li .chk.cyan   { color: var(--cyan); }
+    .pc-features li .chk.purple { color: var(--purple); }
+    .btn-subscribe {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 14px; border-radius: 50px; font-weight: 700; font-size: 0.9rem;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s;
+    }
+    .btn-subscribe.gold   { background: linear-gradient(135deg, var(--gold), #e0a800); color: #0B0F19; box-shadow: 0 0 20px rgba(245,200,66,0.3); }
+    .btn-subscribe.cyan   { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); }
+    .btn-subscribe.purple { background: transparent; border: 1px solid var(--purple); color: var(--purple); }
+    .btn-subscribe:hover { transform: translateY(-2px) scale(1.03); }
+    .btn-subscribe.gold:hover   { box-shadow: 0 0 35px rgba(245,200,66,0.5); }
+    .btn-subscribe.cyan:hover   { background: rgba(0,229,255,0.08); box-shadow: 0 0 25px rgba(0,229,255,0.25); }
+    .btn-subscribe.purple:hover { background: rgba(155,89,255,0.08); box-shadow: 0 0 25px rgba(155,89,255,0.25); }
+    .app-tag {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      font-size: 0.68rem; color: var(--text-secondary); margin-top: 10px;
+    }
+
+    /* ── INSTRUCTIONS ── */
+    #instructions {}
+    .steps-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.5rem; margin-top: 3.5rem; position: relative; }
+    .steps-grid::before {
+      content: ''; position: absolute; top: 36px; left: 12%; right: 12%; height: 1px;
+      background: linear-gradient(90deg, var(--gold), var(--cyan));
+      opacity: 0.3; z-index: 0;
+    }
+    .step-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      position: relative; z-index: 1;
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), border-color 0.3s;
+      text-align: center;
+    }
+    .step-card:hover { transform: translateY(-6px); border-color: rgba(245,200,66,0.4); }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 1.2rem;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 900;
+      background: rgba(245,200,66,0.1); border: 2px solid rgba(245,200,66,0.35);
+      color: var(--gold); position: relative;
+    }
+    .step-num::after {
+      content: ''; position: absolute; inset: -4px; border-radius: 50%;
+      border: 1px solid rgba(245,200,66,0.15);
+    }
+    .step-card h4 { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .step-card p  { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+    .step-card .step-icon { font-size: 1.2rem; margin-bottom: 0.5rem; }
+
+    /* ── FAQ ── */
+    #faq { background: linear-gradient(180deg, transparent 0%, rgba(155,89,255,0.02) 50%, transparent 100%); }
+    .faq-list { margin-top: 3rem; display: flex; flex-direction: column; gap: 12px; }
+    .faq-item {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      overflow: hidden; transition: border-color 0.3s;
+    }
+    .faq-item.open { border-color: rgba(245,200,66,0.35); }
+    .faq-q {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 1.5rem; background: none; border: none; cursor: pointer;
+      text-align: left; color: var(--text-primary); font-size: 0.95rem; font-weight: 600;
+      gap: 1rem;
+    }
+    .faq-q .faq-icon {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.25);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-size: 0.8rem;
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), background 0.3s;
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); background: rgba(245,200,66,0.2); }
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1), padding 0.3s;
+      padding: 0 1.5rem;
+    }
+    .faq-answer.open { max-height: 400px; padding: 0 1.5rem 1.2rem; }
+    .faq-answer p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      padding: 3rem 6%;
+    }
+    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: gap; gap: 1.5rem; }
+    .footer-logo { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 900; background: linear-gradient(135deg, var(--gold), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .footer-copy { font-size: 0.82rem; color: var(--text-secondary); }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.82rem; transition: color 0.25s; }
+    .footer-links a:hover { color: var(--gold); }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .pricing-grid, .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps-grid { grid-template-columns: 1fr 1fr; }
+      .steps-grid::before { display: none; }
+      .pricing-card.featured { transform: none; }
+    }
+    @media (max-width: 768px) {
+      .hero-content { grid-template-columns: 1fr; text-align: center; gap: 3rem; }
+      .hero-text { order: 1; }
+      .hero-visual { order: 2; }
+      .hero-actions { justify-content: center; }
+      .hero-subtitle { margin: 0 auto 2.5rem; }
+      .hero-badge { margin: 0 auto 1.5rem; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr 1fr; }
+      .card-3d-wrapper { width: 280px; height: 360px; }
+      .floating-card.card-l { left: -20px; }
+      .floating-card.card-r { right: -20px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .btn-download, .btn-outline { width: 100%; justify-content: center; }
+    }
+
+    /* ── NEON SCAN LINE ── */
+    .neon-line-h {
+      width: 80px; height: 2px; border-radius: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 1rem 0;
+      animation: scanMove 3s ease-in-out infinite;
+    }
+    @keyframes scanMove { 0%,100%{opacity:0.4; width:60px} 50%{opacity:1; width:100px} }
+
+    /* ── TYPING CURSOR ── */
+    .cursor { display: inline-block; width: 3px; height: 1.1em; background: var(--gold); margin-left: 2px; vertical-align: middle; animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  </style>
+</head>
+<body>
+
+<!-- STARFIELD CANVAS -->
+<canvas id="starfield"></canvas>
+
+<!-- ════════════════════════════════════════
+     NAVIGATION
+════════════════════════════════════════ -->
+<nav id="navbar">
+  <span class="nav-logo">LYMIO</span>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#instructions">Setup</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <a href="https://github.com/khfahim1/lymio/releases/download/v1.0.0/Lymio.apk" download class="nav-cta">
+    <i class="fas fa-download"></i> Download APK
+  </a>
+  <div class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#features" onclick="closeMobileMenu()">Features</a>
+  <a href="#pricing" onclick="closeMobileMenu()">Pricing</a>
+  <a href="#instructions" onclick="closeMobileMenu()">Setup</a>
+  <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
+  <a href="https://github.com/khfahim1/lymio/releases/download/v1.0.0/Lymio.apk" download style="color: var(--gold); font-weight:700;">
+    <i class="fas fa-download"></i> Download APK
+  </a>
+</div>
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-bg-glow gold"></div>
+  <div class="hero-bg-glow cyan"></div>
+  <div class="hero-bg-glow purple"></div>
+
+  <div class="hero-content">
+    <!-- LEFT TEXT -->
+    <div class="hero-text reveal">
+      <div class="hero-badge">
+        <i class="fas fa-circle" style="font-size:0.5rem; animation: pulseGold 1.5s infinite;"></i>
+        Now Live · v1.0 Production
+      </div>
+      <h1 class="hero-title">
+        <span class="line-gold">Your AI Companion,</span><br/>
+        <span class="line-cyan">Always</span> Floating.<br/>
+        <span id="typed-word"></span><span class="cursor"></span>
+      </h1>
+      <div class="neon-line-h"></div>
+      <p class="hero-subtitle">
+        Lymio is a persistent 250×250 AI overlay that lives on your Android screen —
+        powered by Claude, DeepSeek &amp; foundational models. One tap away, always ready.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/khfahim1/lymio/releases/download/v1.0.0/Lymio.apk" download class="btn-download" id="mainDownloadBtn">
+          <i class="fas fa-download"></i>
+          Download Lymio APK
+        </a>
+        <a href="#features" class="btn-outline">
+          <i class="fas fa-play-circle"></i>
+          Explore Features
+        </a>
+      </div>
+      <p style="margin-top:1.2rem; font-size:0.75rem; color:var(--text-secondary);">
+        <i class="fab fa-android" style="color:#4ade80;"></i>
+        Android 8.0+ &nbsp;·&nbsp; Free APK Direct Download &nbsp;·&nbsp; No Store Required
+      </p>
+    </div>
+
+    <!-- RIGHT 3D VISUAL -->
+    <div class="hero-visual reveal" style="transition-delay:0.2s;">
+      <div class="card-3d-wrapper" id="card3d">
+        <div class="phone-glow-ring"></div>
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <div class="bubble-orb"></div>
+            <div class="screen-text-block">
+              <div class="label">Active Engine</div>
+              <div class="value" id="engineCycle">Claude 3.7 Sonnet</div>
+            </div>
+            <div class="screen-text-block">
+              <div class="label">Overlay Mode</div>
+              <div class="value">Persistent Float · 250×250px</div>
+            </div>
+            <div class="screen-chips">
+              <span class="chip claude">Claude</span>
+              <span class="chip deepseek">DeepSeek</span>
+              <span class="chip gpt">GPT-4o</span>
+            </div>
+            <div class="screen-text-block" style="border-color:rgba(0,229,255,0.2);">
+              <div class="label" style="color:var(--cyan);">Double-Tap Shortcut</div>
+              <div class="value">Chat Toggle · Active</div>
+            </div>
+          </div>
+        </div>
+        <!-- Floating badge cards -->
+        <div class="floating-card card-l">
+          <span class="dot dot-green"></span>
+          <span style="color:var(--text-primary);">AI Online</span>
+        </div>
+        <div class="floating-card card-r">
+          <span class="dot dot-yellow"></span>
+          <span style="color:var(--gold);">Double-Tap Ready</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ════════════════════════════════════════
+     CORE FEATURES
+════════════════════════════════════════ -->
+<section id="features">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">Core Capabilities</div>
+      <h2 class="section-title">Built Different.<br/>Designed to <span style="color:var(--gold);">Stay.</span></h2>
+      <p class="section-sub">Three pillars that make Lymio the most intuitive AI companion on Android.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <!-- Card 1 -->
+      <div class="feature-card reveal" style="--accent-color:var(--gold); --accent-glow:var(--gold-glow); transition-delay:0.1s;">
+        <div class="feature-icon gold"><i class="fas fa-circle-dot"></i></div>
+        <h3>Persistent 250×250<br/>Companion Float</h3>
+        <p>
+          Lymio's iconic draggable orb stays pinned above every app — a translucent 250×250 px overlay
+          that never interrupts your workflow. Drag it to any corner, resize it, or collapse it to a dot
+          with a single tap.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag gold">Always-On Overlay</span>
+          <span class="ftag gold">Drag & Drop</span>
+          <span class="ftag gold">System-Level Float</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="feature-card reveal" style="--accent-color:var(--cyan); --accent-glow:var(--cyan-glow); transition-delay:0.2s;">
+        <div class="feature-icon cyan"><i class="fas fa-code-branch"></i></div>
+        <h3>Native Code Suite<br/>Integration</h3>
+        <p>
+          Switch seamlessly between Claude, DeepSeek, and foundational models from a single interface.
+          Code-aware prompts, diff explanations, stack-trace debugging — all precision-targeted to the
+          engine you choose.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag cyan">Claude 3.7</span>
+          <span class="ftag cyan">DeepSeek</span>
+          <span class="ftag cyan">GPT-4o</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="feature-card reveal" style="--accent-color:var(--purple); --accent-glow:var(--purple-glow); transition-delay:0.3s;">
+        <div class="feature-icon purple"><i class="fas fa-hand-pointer"></i></div>
+        <h3>Double-Tap<br/>Shortcuts</h3>
+        <p>
+          Two fast taps on the floating bubble launches the full-screen chat panel in under 80ms.
+          Background toggle triggers keep you in flow — no swipe, no home button, no friction.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag purple">80ms Launch</span>
+          <span class="ftag purple">Gesture Trigger</span>
+          <span class="ftag purple">Background Toggle</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ════════════════════════════════════════
+     PRICING
+════════════════════════════════════════ -->
+<section id="pricing">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">Pricing Plans</div>
+      <h2 class="section-title">Transparent.<br/><span style="color:var(--gold);">No Hidden Tiers.</span></h2>
+      <p class="section-sub">Choose a plan that scales with your usage. All subscriptions are managed securely inside the Lymio app.</p>
+
+      <div class="pricing-toggle-wrapper">
+        <span class="toggle-label" id="labelMonthly" style="color:var(--text-primary);">Monthly</span>
+        <label class="toggle-switch" aria-label="Toggle billing cycle">
+          <input type="checkbox" id="billingToggle" />
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+        <span class="toggle-label" id="labelYearly">Yearly</span>
+        <span class="savings-badge" id="savingsBadge" style="display:none;"><i class="fas fa-tag"></i> Save 20%</span>
+      </div>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- STARTER -->
+      <div class="pricing-card reveal" style="transition-delay:0.1s;">
+        <div class="pc-tier">Starter</div>
+        <div class="pc-price">
+          <span class="pc-currency">$</span>
+          <span class="pc-amount" id="price-starter">5</span>
+          <span class="pc-period" id="period-starter">/mo</span>
+        </div>
+        <div class="pc-bdt" id="bdt-starter">≈ <span>600 BDT</span> / month</div>
+        <div class="pc-divider"></div>
+        <ul class="pc-features">
+          <li><span class="chk"><i class="fas fa-chart-bar"></i></span> Max Monthly Chats: <strong style="color:var(--text-primary);">300</strong></li>
+          <li><span class="chk"><i class="fas fa-robot"></i></span> Claude-Sonnet-4-6: <strong style="color:var(--text-primary);">10 msg/day</strong></li>
+          <li><span class="chk"><i class="fas fa-brain"></i></span> DeepSeek-v4-Pro: <strong style="color:var(--text-primary);">20 msg/day</strong></li>
+          <li><span class="chk"><i class="fas fa-code"></i></span> Generic Code Models: <strong style="color:var(--text-primary);">50 msg/day</strong></li>
+          <li><span class="chk"><i class="fas fa-circle-dot"></i></span> Persistent 250×250 Companion Float</li>
+          <li><span class="chk"><i class="fas fa-hand-pointer"></i></span> Double-Tap Shortcut Interaction</li>
+        </ul>
+        <button class="btn-subscribe cyan" onclick="alert('Open Lymio app to subscribe.')">
+          <i class="fas fa-mobile-alt"></i> Subscribe via App
+        </button>
+        <div class="app-tag"><i class="fab fa-android"></i> Checkout inside Lymio · LemonSqueezy</div>
+      </div>
+
+      <!-- PRO (featured) -->
+      <div class="pricing-card featured reveal" style="transition-delay:0.2s;">
+        <div class="pc-badge">Most Popular</div>
+        <div class="pc-tier gold">Pro</div>
+        <div class="pc-price">
+          <span class="pc-currency" style="color:var(--gold);">$</span>
+          <span class="pc-amount" id="price-pro" style="color:var(--gold);">10</span>
+          <span class="pc-period" id="period-pro">/mo</span>
+        </div>
+        <div class="pc-bdt" id="bdt-pro">≈ <span>1,200 BDT</span> / month</div>
+        <div class="pc-divider"></div>
+        <ul class="pc-features">
+          <li><span class="chk"><i class="fas fa-chart-bar"></i></span> Max Monthly Chats: <strong style="color:var(--text-primary);">500</strong></li>
+          <li><span class="chk"><i class="fas fa-robot"></i></span> Claude-Sonnet-4-6: <strong style="color:var(--text-primary);">20 msg/day</strong></li>
+          <li><span class="chk"><i class="fas fa-brain"></i></span> DeepSeek-v4-Pro: <strong style="color:var(--text-primary);">30 msg/day</strong></li>
+          <li><span class="chk"><i class="fas fa-code"></i></span> Generic Code Models: <strong style="color:var(--text-primary);">70 msg/day</strong></li>
+          <li><span class="chk"><i class="fas fa-layer-group"></i></span> Everything in Starter Plan</li>
+          <li><span class="chk"><i class="fas fa-bolt"></i></span> Priority Response Speed</li>
+        </ul>
+        <button class="btn-subscribe gold" onclick="alert('Open Lymio app to subscribe.')">
+          <i class="fas fa-mobile-alt"></i> Subscribe via App
+        </button>
+        <div class="app-tag"><i class="fab fa-android"></i> Checkout inside Lymio · LemonSqueezy</div>
+      </div>
+
+      <!-- ELITE -->
+      <div class="pricing-card reveal" style="transition-delay:0.3s;">
+        <div class="pc-tier purple">Elite</div>
+        <div class="pc-price">
+          <span class="pc-currency" style="color:var(--purple);">$</span>
+          <span class="pc-amount" id="price-elite" style="color:var(--purple);">20</span>
+          <span class="pc-period" id="period-elite">/mo</span>
+        </div>
+        <div class="pc-bdt" id="bdt-elite">≈ <span>2,400 BDT</span> / month</div>
+        <div class="pc-divider"></div>
+        <ul class="pc-features">
+          <li><span class="chk purple"><i class="fas fa-chart-bar"></i></span> Max Monthly Chats: <strong style="color:var(--text-primary);">1,000</strong></li>
+          <li><span class="chk purple"><i class="fas fa-robot"></i></span> Claude-Sonnet-4-6: <strong style="color:var(--text-primary);">50 msg/day</strong></li>
+          <li><span class="chk purple"><i class="fas fa-brain"></i></span> DeepSeek-v4-Pro: <strong style="color:var(--text-primary);">60 msg/day</strong></li>
+          <li><span class="chk purple"><i class="fas fa-code"></i></span> Generic Code Models: <strong style="color:var(--text-primary);">100 msg/day</strong></li>
+          <li><span class="chk purple"><i class="fas fa-layer-group"></i></span> Everything in Pro Plan</li>
+          <li><span class="chk purple"><i class="fas fa-rocket"></i></span> Ultra Response Speed</li>
+        </ul>
+        <button class="btn-subscribe purple" onclick="alert('Open Lymio app to subscribe.')">
+          <i class="fas fa-mobile-alt"></i> Subscribe via App
+        </button>
+        <div class="app-tag"><i class="fab fa-android"></i> Checkout inside Lymio · LemonSqueezy</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ════════════════════════════════════════
+     INSTRUCTIONS
+════════════════════════════════════════ -->
+<section id="instructions">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">Getting Started</div>
+      <h2 class="section-title">Up & Running in<br/><span style="color:var(--gold);">4 Simple Steps.</span></h2>
+      <p class="section-sub">No app store. No waiting. Just download, install, and launch your AI companion.</p>
+    </div>
+
+    <div class="steps-grid">
+
+      <div class="step-card reveal" style="transition-delay:0.1s;">
+        <div class="step-num">01</div>
+        <div class="step-icon">⬇️</div>
+        <h4>Download the APK</h4>
+        <p>Tap the golden <strong style="color:var(--gold);">Download Lymio APK</strong> button above or use the direct path <code style="color:var(--cyan); font-size:0.75rem;">./apk/Lymio.apk</code>. The file downloads instantly via your browser.</p>
+      </div>
+
+      <div class="step-card reveal" style="transition-delay:0.2s;">
+        <div class="step-num">02</div>
+        <div class="step-icon">🔓</div>
+        <h4>Allow Unknown Sources</h4>
+        <p>Go to <strong>Settings → Apps → Special App Access → Install Unknown Apps</strong>. Toggle permission for your browser (e.g. Chrome). This is a one-time step and safe to do.</p>
+      </div>
+
+      <div class="step-card reveal" style="transition-delay:0.3s;">
+        <div class="step-num">03</div>
+        <div class="step-icon">📲</div>
+        <h4>Install & Launch</h4>
+        <p>Open the downloaded APK file from your notifications or Downloads folder. Tap <strong>Install</strong>, then <strong>Open</strong>. Grant the <em>Draw Over Other Apps</em> permission when prompted.</p>
+      </div>
+
+      <div class="step-card reveal" style="transition-delay:0.4s;">
+        <div class="step-num">04</div>
+        <div class="step-icon">🚀</div>
+        <h4>Sign Up & Subscribe</h4>
+        <p>Create your Lymio account inside the app. Navigate to the Subscription tab and choose your plan. Checkout is powered by <strong style="color:var(--gold);">LemonSqueezy</strong> — your account activates within seconds.</p>
+      </div>
+
+    </div>
+
+    <!-- Additional tip box -->
+    <div class="reveal" style="transition-delay:0.5s; margin-top:2rem;">
+      <div style="background:rgba(245,200,66,0.06); border:1px solid rgba(245,200,66,0.2); border-radius:var(--radius); padding:1.2rem 1.5rem; display:flex; gap:1rem; align-items:flex-start;">
+        <div style="color:var(--gold); font-size:1.2rem; flex-shrink:0; margin-top:2px;"><i class="fas fa-shield-halved"></i></div>
+        <div>
+          <div style="font-weight:700; margin-bottom:0.3rem; font-size:0.9rem;">Security Note</div>
+          <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.6;">
+            Lymio does not require root access. All data is encrypted in transit. The overlay permission is used exclusively to render the companion bubble. You can revoke it at any time from your Android settings.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ════════════════════════════════════════
+     FAQ
+════════════════════════════════════════ -->
+<section id="faq">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag">FAQ</div>
+      <h2 class="section-title">Questions?<br/><span style="color:var(--gold);">We've Got You.</span></h2>
+      <p class="section-sub">Everything you need to know about Lymio's operation, servers, and subscriptions.</p>
+    </div>
+
+    <div class="faq-list reveal" style="transition-delay:0.1s;">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>What are Lymio's server uptime guarantees?</span>
+          <span class="faq-icon"><i class="fas fa-plus"></i></span>
+        </button>
+        <div class="faq-answer">
+          <p>Lymio targets a <strong>99.5% monthly uptime SLA</strong> for all AI engine routes. Our infrastructure runs on redundant cloud nodes with automatic failover. Scheduled maintenance windows are announced at least 24 hours in advance via in-app notifications. Status updates are always accessible from the Settings panel inside the app.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>How quickly does my account activate after subscribing?</span>
+          <span class="faq-icon"><i class="fas fa-plus"></i></span>
+        </button>
+        <div class="faq-answer">
+          <p>Lymio uses <strong>LemonSqueezy</strong> as its payment processor. Upon a successful payment, a webhook fires to Lymio's backend and your account tier is upgraded <strong>within 5–15 seconds</strong>. If you don't see your tier activate within 2 minutes, pull-to-refresh the subscription screen inside the app. Contact support if it exceeds 5 minutes.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Is it safe to install an APK outside the Play Store?</span>
+          <span class="faq-icon"><i class="fas fa-plus"></i></span>
+        </button>
+        <div class="faq-answer">
+          <p>Yes — sideloading APKs is a supported and standard Android feature. Lymio's APK is signed with our production certificate. You can verify the SHA-256 signature hash listed on this page matches the downloaded file. We recommend re-enabling "Block Unknown Sources" after installation as a good security practice. Lymio requests only the minimum permissions needed.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Which Android versions are supported?</span>
+          <span class="faq-icon"><i class="fas fa-plus"></i></span>
+        </button>
+        <div class="faq-answer">
+          <p>Lymio supports <strong>Android 8.0 (Oreo) and above</strong>. The "Draw Over Other Apps" (System Alert Window) API required for the floating companion became stable on Android 8+. For optimal performance, we recommend Android 11+ which provides improved multi-window handling. MIUI, One UI, and OxygenOS users may need to enable "Background Pop-up" permission in battery settings.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Can I switch between AI engines during a session?</span>
+          <span class="faq-icon"><i class="fas fa-plus"></i></span>
+        </button>
+        <div class="faq-answer">
+          <p>Absolutely. On Pro and Elite tiers, the engine switcher is accessible directly within the chat panel. Tap the engine badge in the header to cycle between Claude, DeepSeek, and GPT-4o. Each engine maintains separate conversation context by default, though you can optionally carry your last message across engines for comparison replies.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>How do I cancel my subscription?</span>
+          <span class="faq-icon"><i class="fas fa-plus"></i></span>
+        </button>
+        <div class="faq-answer">
+          <p>Navigate to <strong>Settings → Subscription → Manage Plan</strong> inside the Lymio app. You can cancel at any time — your plan remains active through the end of the current billing period. No prorated charges. No cancellation fees. Alternatively, you can manage your subscription directly via your LemonSqueezy customer portal email receipt.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">LYMIO</div>
+      <div class="footer-copy" style="margin-top:0.5rem;">© 2025 Lymio · lymio.app · All rights reserved.</div>
+    </div>
+    <div class="footer-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#instructions">Setup</a>
+      <a href="#faq">FAQ</a>
+      <a href="./apk/Lymio.apk" download style="color:var(--gold); font-weight:700;">Download APK</a>
+    </div>
+    <div style="font-size:0.78rem; color:var(--text-secondary); text-align:right;">
+      <div style="margin-bottom:4px;"><i class="fab fa-android" style="color:#4ade80;"></i> Android 8.0+</div>
+      <div>Powered by LemonSqueezy</div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+/* ── STARFIELD ── */
+(function () {
+  const canvas = document.getElementById('starfield');
+  const ctx    = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function initStars(n = 220) {
+    stars = [];
+    for (let i = 0; i < n; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.4 + 0.2,
+        o: Math.random() * 0.6 + 0.2,
+        s: Math.random() * 0.15 + 0.02,
+        d: Math.random() > 0.5 ? 1 : -1
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    stars.forEach(s => {
+      s.o += s.s * s.d * 0.012;
+      if (s.o >= 0.8 || s.o <= 0.1) s.d *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(245,200,66,${s.o * 0.35})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { resize(); initStars(); });
+  resize(); initStars(); draw();
+})();
+
+/* ── NAVBAR SCROLL ── */
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 50) {
+    nav.style.borderBottomColor = 'rgba(245,200,66,0.25)';
+    nav.style.background = 'rgba(11,15,25,0.92)';
+  } else {
+    nav.style.borderBottomColor = 'rgba(245,200,66,0.18)';
+    nav.style.background = 'rgba(11,15,25,0.72)';
+  }
+});
+
+/* ── MOBILE MENU ── */
+const hamburger  = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+function closeMobileMenu() { mobileMenu.classList.remove('open'); }
+
+/* ── 3D CARD PARALLAX ── */
+const card3d = document.getElementById('card3d');
+const hero   = document.getElementById('hero');
+hero.addEventListener('mousemove', e => {
+  const rect   = hero.getBoundingClientRect();
+  const cx     = rect.left + rect.width  / 2;
+  const cy     = rect.top  + rect.height / 2;
+  const dx     = (e.clientX - cx) / rect.width;
+  const dy     = (e.clientY - cy) / rect.height;
+  const rotY   = dx * 18;
+  const rotX   = -dy * 12;
+  card3d.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+});
+hero.addEventListener('mouseleave', () => {
+  card3d.style.transition = 'transform 0.6s cubic-bezier(.34,1.56,.64,1)';
+  card3d.style.transform  = 'rotateY(0deg) rotateX(0deg)';
+  setTimeout(() => card3d.style.transition = 'transform 0.1s linear', 650);
+});
+
+/* ── ENGINE CYCLE ── */
+const engines = ['Claude 3.7 Sonnet', 'DeepSeek V3', 'GPT-4o', 'DeepSeek Coder', 'Claude Haiku'];
+let ei = 0;
+setInterval(() => {
+  ei = (ei + 1) % engines.length;
+  const el = document.getElementById('engineCycle');
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(8px)';
+  el.style.transition = 'opacity 0.3s, transform 0.3s';
+  setTimeout(() => {
+    el.textContent = engines[ei];
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+  }, 320);
+}, 2800);
+
+/* ── TYPED EFFECT ── */
+const words    = ['Always On.', 'Zero Friction.', 'Deeply Intelligent.', 'Always Floating.'];
+let wi = 0, ci = 0, deleting = false;
+const typedEl  = document.getElementById('typed-word');
+function typeLoop() {
+  const word    = words[wi];
+  const display = deleting ? word.slice(0, ci--) : word.slice(0, ci++);
+  typedEl.textContent = display;
+  let delay = deleting ? 55 : 90;
+  if (!deleting && ci > word.length) { delay = 1800; deleting = true; }
+  if (deleting && ci < 0)            { deleting = false; wi = (wi + 1) % words.length; ci = 0; delay = 400; }
+  setTimeout(typeLoop, delay);
+}
+typeLoop();
+
+/* ── PRICING TOGGLE ── */
+const billingToggle = document.getElementById('billingToggle');
+const labelMonthly  = document.getElementById('labelMonthly');
+const labelYearly   = document.getElementById('labelYearly');
+const savingsBadge  = document.getElementById('savingsBadge');
+
+const prices = {
+  monthly: { starter: ['5','600 BDT / month'], pro: ['10','1,200 BDT / month'], elite: ['20','2,400 BDT / month'] },
+  yearly:  { starter: ['4','5,760 BDT billed annually'], pro: ['8','11,520 BDT billed annually'], elite: ['16','23,040 BDT billed annually'] }
+};
+
+function updatePricing(yearly) {
+  const p = yearly ? prices.yearly : prices.monthly;
+  const suffix = yearly ? '/mo' : '/mo';
+
+  ['starter','pro','elite'].forEach(t => {
+    const am = document.getElementById(`price-${t}`);
+    const bd = document.getElementById(`bdt-${t}`);
+    const pr = document.getElementById(`period-${t}`);
+    am.style.transform = 'translateY(6px)'; am.style.opacity = '0';
+    bd.style.opacity = '0';
+    setTimeout(() => {
+      am.textContent = p[t][0];
+      bd.innerHTML   = `≈ <span>${p[t][1]}</span>`;
+      pr.textContent = suffix;
+      am.style.transform = 'translateY(0)'; am.style.opacity = '1';
+      bd.style.opacity = '1';
+    }, 200);
+    am.style.transition = 'transform 0.25s, opacity 0.25s';
+    bd.style.transition = 'opacity 0.25s';
+  });
+
+  labelMonthly.style.color = yearly ? 'var(--text-secondary)' : 'var(--text-primary)';
+  labelYearly.style.color  = yearly ? 'var(--text-primary)'   : 'var(--text-secondary)';
+  savingsBadge.style.display = yearly ? 'inline-flex' : 'none';
+}
+
+billingToggle.addEventListener('change', () => updatePricing(billingToggle.checked));
+
+/* ── FAQ ACCORDION ── */
+function toggleFaq(btn) {
+  const item   = btn.parentElement;
+  const answer = item.querySelector('.faq-answer');
+  const isOpen = item.classList.contains('open');
+
+  document.querySelectorAll('.faq-item.open').forEach(i => {
+    i.classList.remove('open');
+    i.querySelector('.faq-answer').classList.remove('open');
+  });
+
+  if (!isOpen) {
+    item.classList.add('open');
+    answer.classList.add('open');
+  }
+}
+
+/* ── SCROLL REVEAL ── */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revealObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+/* ── DOWNLOAD BUTTON RIPPLE FEEDBACK ── */
+document.getElementById('mainDownloadBtn').addEventListener('click', function () {
+  this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
+  setTimeout(() => {
+    this.innerHTML = '<i class="fas fa-check-circle"></i> Download Started!';
+    this.style.background = 'linear-gradient(135deg,#4ade80,#22c55e)';
+    setTimeout(() => {
+      this.innerHTML = '<i class="fas fa-download"></i> Download Lymio APK';
+      this.style.background = '';
+    }, 3000);
+  }, 800);
+});
+</script>
+</body>
+</html>
