@@ -1,0 +1,92 @@
+// Lymio Prisma schema
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Minecraft premium accounts managed by admin, unlocked after 5 Adsterra ads
+model MinecraftAccount {
+  id        String   @id @default(cuid())
+  email     String
+  password  String
+  status    String   @default("available") // available | claimed
+  claimedBy String?  // username of claimer
+  claimedAt DateTime?
+  source    String   @default("manual") // manual | import
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Cached Minecraft news pulled from whitelisted official sources
+model NewsArticle {
+  id        String   @id @default(cuid())
+  sourceId  String   @unique // guid/link hash to dedupe
+  title     String
+  link      String
+  summary   String
+  content   String?
+  author    String?
+  category  String?
+  imageUrl  String?
+  source    String   // minecraft.net | feedback.minecraft.net | minecraft.net/en-us
+  publishedAt DateTime
+  fetchedAt DateTime @default(now())
+
+  @@index([publishedAt])
+}
+
+// Curated mod entries with Modrinth slug + fallback URL
+model ModEntry {
+  id         String  @id @default(cuid())
+  slug       String  @unique // Modrinth project slug
+  name       String
+  summary    String
+  category   String
+  iconUrl    String?
+  fallbackUrl String // CurseForge / GitHub / official site
+  featured   Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Chat users (lightweight, username-based session for demo; replaces Firebase Auth)
+model ChatUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  avatar    String?
+  online    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Persisted chat messages (mirrors real-time stream; supports 1-1 + group rooms)
+model ChatMessage {
+  id        String   @id @default(cuid())
+  roomId    String   // room id (dm:userA:userB or group:xxx)
+  sender    String
+  content   String
+  type      String   @default("text") // text | file-meta | system
+  fileName  String?
+  fileSize  Int?
+  fileType  String?
+  createdAt DateTime @default(now())
+
+  @@index([roomId, createdAt])
+}
+
+// Records each premium-account claim (auditable, prevents double-claim)
+model AccountClaim {
+  id        String   @id @default(cuid())
+  username  String
+  accountId String
+  adCount   Int      // must equal 5 to be valid
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([username])
+}
