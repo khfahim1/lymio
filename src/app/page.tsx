@@ -5,7 +5,6 @@ import { NewsSection } from '@/components/lymio/news-section'
 import { ModsSection } from '@/components/lymio/mods-section'
 import { PremiumSection } from '@/components/lymio/premium-section'
 import { AdminSection } from '@/components/lymio/admin-section'
-import { AdsterraNativeBanner, AdsterraBanner160 } from '@/components/lymio/adsterra'
 import { Newspaper, Blocks, Crown, Lock, Github, Twitter } from 'lucide-react'
 
 type Tab = 'news' | 'mods' | 'premium' | 'admin'
@@ -124,39 +123,12 @@ export default function Home({
         </section>
       )}
 
-      {/* Main content with sidebar ads on desktop */}
+      {/* Main content */}
       <main className="flex-1 container mx-auto max-w-7xl px-4 py-8">
-        <div className="flex gap-6">
-          {/* Sidebar ad — left (desktop only) */}
-          <aside className="hidden xl:block w-[170px] shrink-0">
-            <div className="sticky top-24 p-3 rounded-xl border-2 border-border/80 bg-card/45 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
-              <div className="text-[10px] font-black uppercase tracking-wider text-emerald-400 mb-2.5 text-center">Sponsored</div>
-              <AdsterraBanner160 className="min-h-[300px] w-[140px] rounded border border-border/20 bg-muted/15" />
-            </div>
-          </aside>
-
-          {/* Section content */}
-          <div className="flex-1 min-w-0">
-            {tab === 'news' && <NewsSection />}
-            {tab === 'mods' && <ModsSection />}
-            {tab === 'premium' && <PremiumSection />}
-            {tab === 'admin' && <AdminSection />}
-          </div>
-
-          {/* Sidebar ad — right (desktop only) */}
-          <aside className="hidden xl:block w-[170px] shrink-0">
-            <div className="sticky top-24 p-3 rounded-xl border-2 border-border/80 bg-card/45 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
-              <div className="text-[10px] font-black uppercase tracking-wider text-emerald-400 mb-2.5 text-center">Sponsored</div>
-              <AdsterraBanner160 className="min-h-[300px] w-[140px] rounded border border-border/20 bg-muted/15" />
-            </div>
-          </aside>
-        </div>
-
-        {/* Native banner — full width core placement */}
-        <div className="mt-10 p-4 rounded-xl border-2 border-border/80 bg-card/45 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
-          <div className="text-[10px] font-black uppercase tracking-wider text-emerald-400 mb-3 text-center">Sponsored Content</div>
-          <AdsterraNativeBanner className="min-h-[100px] rounded-lg bg-stone-900/30" />
-        </div>
+        {tab === 'news' && <NewsSection />}
+        {tab === 'mods' && <ModsSection />}
+        {tab === 'premium' && <PremiumSection />}
+        {tab === 'admin' && <AdminSection />}
       </main>
 
       {/* Footer */}
@@ -198,7 +170,7 @@ export default function Home({
           </div>
           <div className="mt-8 pt-4 border-t border-border/40 flex flex-wrap items-center justify-between gap-2.5 text-xs text-muted-foreground">
             <span>© {new Date().getFullYear()} Lymio — Built for the Minecraft community.</span>
-            <span className="lymio-pixel text-emerald-400">v1.0 · Adsterra ID 5851493</span>
+            <span className="lymio-pixel text-emerald-400">v1.0</span>
           </div>
         </div>
       </footer>

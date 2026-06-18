@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-import { AdsterraSocialBar } from "@/components/lymio/adsterra";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -91,8 +90,6 @@ export default function RootLayout({
         {children}
         <Toaster />
         <SonnerToaster position="top-center" richColors />
-        {/* Adsterra Social Bar — global closing footer tag */}
-        <AdsterraSocialBar />
       </body>
     </html>
   );

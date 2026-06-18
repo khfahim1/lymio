@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Newspaper, RefreshCw, ExternalLink, Clock, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
-import { AdsterraNativeBanner } from './adsterra'
 
 interface Article {
   id: string
@@ -297,12 +296,6 @@ export function NewsSection() {
                   </div>
                 </div>
               </a>
-              {idx === 2 && (
-                <div className="col-span-full my-4 p-5 rounded-xl border-2 border-border/85 bg-card/45 shadow-[4px_4px_0px_rgba(0,0,0,0.35)]">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-emerald-400 mb-2.5 text-center">Sponsored Content</div>
-                  <AdsterraNativeBanner className="min-h-[100px] rounded bg-stone-900/20" />
-                </div>
-              )}
             </div>
           )})}
         </div>
